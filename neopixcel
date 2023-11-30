@@ -1,0 +1,84 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// NeoPixel Ring simple sketch (c) 2013 Shae Erisson
+// released under the GPLv3 license to match the rest of the AdaFruit NeoPixel library
+//
+// www.ArduinoPLUS.cc
+//
+#include <Adafruit_NeoPixel.h>
+#define NUMPIXELS      8    // 연결된 Rainbow LED 수
+#define PIN            6    // Rainbow LED 를 연결할 Arduino 디지털 포트 번호 입니다.
+#define GAP            256   // 128   //256   //  서브 축(10 개)의 거리
+#define SPEED          2   //  이동 속도  마스터 축 이동 간격
+#define DELAY          1   //  디스플레이 지연시간 
+
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+
+unsigned char color_red;          // RED 전역 변수 (모든 함수에서 읽기, 쓰기가 가능하다)
+unsigned char color_green;        // GREEN 전역 변수 (모든 함수에서 읽기, 쓰기가 가능하다)
+unsigned char color_blue;         // BLUE 전역 변수 (모든 함수에서 읽기, 쓰기가 가능하다)
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 네오픽셀 레인보우 색상 RED, GREEN, BLUE 을 프로그램 방법으로 만든다
+void wheel(unsigned int i) {
+  unsigned int k, m, t;
+  
+      i = i%0x300;             // 0x300 (768) 보다 큰수자가 올수도 있으므로 나머지 연산하여 768 이하로 조정
+      k = i&0x300;             // 상위 2 비트만 관심있으므로 하위 8 비트를 0 으로 한다.  (00, 01, 10)
+      m = i&0xFF;              // 하위 8 비트만 관심 있으므로 상위 2 비트를 0 으로 한다. (0x0 ~ 0xFF)
+
+        if(k == 0x0000) {
+          color_red = 0xFF - m;      // Red Decrement
+          color_green = m;             // Green Increment
+          color_blue = 0;             // Blue Off
+        }
+                    
+        if(k == 0x0100) {
+          color_red = 0;             // Red Off
+          color_green = 0xFF - m;      // Green Decrement
+          color_blue = m;             // Blue Increment
+        }
+
+        if(k == 0x200) {
+          color_red = m;             // Red Increment
+          color_green = 0;             // Green Off
+          color_blue = 0xFF - m;      // Blue Decrement
+        }
+        
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void setup() {
+  pixels.begin();       // NEOPIXEL 라이브러리를 초기화 합니다.
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void loop() {
+unsigned int a = 0, v = 0;
+
+  while(HIGH) {      
+    for (int i = 0; i < NUMPIXELS; i++) {
+     
+      a = i * GAP;       // 10 개의 서브 축 간격값 
+      a = a % 0x300; 
+      a = a + v;         // 주 축 간격값 
+      a = a % 0x300; 
+
+      wheel(a);         // 함수를 사용하여, Red, Green, Blue 값을 구한다.
+      
+      pixels.setPixelColor(i, pixels.Color(color_red,color_green,color_blue)); 
+      
+    }
+    pixels.show(); 
+    delay(DELAY);
+    v = v +SPEED; 
+    v = v % 0x300; 
+
+  }
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
